@@ -13,11 +13,9 @@ import tkinter.font as tkFont
 from bs4 import BeautifulSoup
 from selenium.common.exceptions import TimeoutException, NoSuchElementException, WebDriverException
 
-#/////////////////////////////
-
-
-
-
+#///////////////////////////
+def mostrar_alerta(driver, mensaje):
+    driver.execute_script(f"alert('{mensaje}');")
 #////////////////////////////
 def buscar_identificacion(entry_identificacion):
     identificacion = entry_identificacion.get()
@@ -89,11 +87,10 @@ def consultar_rut_con_selenium_headless(entry_identificacion):
 
     if not identificacion_limpia:
         messagebox.showinfo("Error", "Por favor, ingrese una identificación.")
-        return
+        return   
     # Configuración para ejecutar en modo headless
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument("--headless")  # Habilitar el modo headless
-    
     try:
         # Iniciar el WebDriver con las opciones configuradas
         driver = webdriver.Chrome(options=chrome_options)
@@ -133,23 +130,22 @@ def consultar_rut_con_selenium_headless(entry_identificacion):
 
             # messagebox.showinfo("Información obtenida",
             #                     f"ID: {numNit}\nDV: {dv}\nRazón Social: {razonSocial}\nFecha: {fecha}\nEstado: {estado}")
-
+            mostrar_alerta(driver, "Cargando resultados")  # Mostrar alerta de carga
             conn = conectar_mysql()
             cursor = conn.cursor()
 
             cursor.execute(
-            f"INSERT INTO Proveedor (idProveedor, Nombre, Dv, Estado) "
+            f"INSERT INTO proveedorrut (idProveedorRUT , NombreRUT, DvRUT, EstadoRUT) "
             f"VALUES ('{numNit}', '{razonSocial}', '{dv}', '{estado}') "
-            f"ON DUPLICATE KEY UPDATE Nombre = '{razonSocial}', Dv = '{dv}', Estado = ' {estado}'"
+            f"ON DUPLICATE KEY UPDATE NombreRUT = '{razonSocial}', DvRUT = '{dv}', EstadoRUT = ' {estado}'"
             )
             conn.commit()  # Guardar cambios en la base de datos
 
             # Guardar en la tabla Consulta
             cursor.execute(
-            f"INSERT INTO Consulta (Proveedor_idProveedor, FechaConsulta, Proveedor) VALUES ('{numNit}', '{fecha}','{razonSocial}')"
+            f"INSERT INTO consultasrut (Proveedor_idProveedorRUT, FechaConsultaRUT, ProveedorRUT) VALUES ('{numNit}', '{fecha}','{razonSocial}')"
             )
             conn.commit()  # Guardar cambios en la base de datos
-           
             messagebox.showinfo("Información obtenida",
                     f"ID: {numNit}\nDV: {dv}\nRazón Social: {razonSocial}\nFecha: {fecha}\nEstado: {estado}")
             
@@ -175,30 +171,28 @@ def consultar_rut_con_selenium_headless(entry_identificacion):
             #estado
             estado = driver.find_element(By.ID, "vistaConsultaEstadoRUT:formConsultaEstadoRUT:estado").text
             
-            messagebox.showinfo("Información  obtenida",
-                                f"ID: {numNit}\nDV: {dv}\nApellidos: {apellidos}\nNombres: {nombres}\nFecha: {fecha}\nEstado: {estado}")
-
+            mostrar_alerta(driver, "Cargando resultados")  # Mostrar alerta de carga
             conn = conectar_mysql()
             cursor = conn.cursor()
 
             # Inserción en la tabla Consulta
             cursor.execute(
-            f"INSERT INTO Proveedor (idProveedor, Nombre, Dv, Estado) "
+            f"INSERT INTO proveedorrut (idProveedorRUT, NombreRUT, DvRUT, EstadoRUT) "
             f"VALUES ('{numNit}', '{apellidos} {nombres}', '{dv}', '{estado}') "
-            f"ON DUPLICATE KEY UPDATE Nombre = '{apellidos} {nombres}', Dv = '{dv}', Estado = '{estado}'"
+            f"ON DUPLICATE KEY UPDATE NombreRUT = '{apellidos} {nombres}', DvRUT = '{dv}', EstadoRUT = '{estado}'"
             )
             conn.commit()  # Guardar cambios en la base de datos
 
             # Guardar en la tabla Consulta
             cursor.execute(
-            f"INSERT INTO Consulta (Proveedor_idProveedor, FechaConsulta,Proveedor) VALUES ('{numNit}', '{fecha}','{apellidos} {nombres}')"
+            f"INSERT INTO consultasrut (Proveedor_idProveedorRUT , FechaConsultaRUT,ProveedorRUT) VALUES ('{numNit}', '{fecha}','{apellidos} {nombres}')"
             )
             conn.commit()  # Guardar cambios en la base de datos
 
            
-            # messagebox.showinfo("Información adicional obtenida",
-            #                 f"ID: {numNit}\nDV: {dv}\nApellidos: {apellidos}\nNombres: {nombres}\nFecha: {fecha}")
-
+            messagebox.showinfo("Información  obtenida",
+                                f"ID: {numNit}\nDV: {dv}\nApellidos: {apellidos}\nNombres: {nombres}\nFecha: {fecha}\nEstado: {estado}")
+            
     except Exception as e:
         print(f"Error: {e}")
 
@@ -227,7 +221,7 @@ def ver_consultas_identificacion(entry_identificacion):
     try:
         conn = conectar_mysql()
         cursor = conn.cursor()
-        cursor.execute(f"SELECT * FROM Consulta WHERE Proveedor_idProveedor = '{identificacion_limpia}'")
+        cursor.execute(f"SELECT * FROM consultasrut WHERE Proveedor_idProveedorRUT = '{identificacion_limpia}'")
         resultados = cursor.fetchall()
         conn.close()
 
@@ -258,7 +252,7 @@ def ver_info_proveedor(entry_identificacion):
     try:
         conn = conectar_mysql()
         cursor = conn.cursor()
-        cursor.execute(f"SELECT idProveedor, Nombre, Dv, Estado FROM Proveedor WHERE idProveedor = '{identificacion_limpia}'")
+        cursor.execute(f"SELECT idProveedorRUT, NombreRUT, DvRUT, EstadoRUT FROM proveedorrut WHERE idProveedorRUT = '{identificacion_limpia}'")
         resultados = cursor.fetchall()
         conn.close()
 
